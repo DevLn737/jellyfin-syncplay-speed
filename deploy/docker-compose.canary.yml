@@ -1,0 +1,28 @@
+services:
+  jellyfin-syncplay-canary:
+    image: ${CANARY_IMAGE:?Set CANARY_IMAGE to an immutable GHCR digest}
+    container_name: jellyfin-syncplay-canary
+    restart: unless-stopped
+    ports:
+      - "${CANARY_BIND_ADDRESS:-127.0.0.1}:${CANARY_PORT:-18096}:8096"
+    environment:
+      JELLYFIN_PublishedServerUrl: ${CANARY_PUBLISHED_URL:-}
+    volumes:
+      - jellyfin-syncplay-canary-config:/config
+      - jellyfin-syncplay-canary-cache:/cache
+      - type: bind
+        source: ${CANARY_MEDIA_PATH:?Set CANARY_MEDIA_PATH to the read-only canary media root}
+        target: /media
+        read_only: true
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8096/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  jellyfin-syncplay-canary-config:
+  jellyfin-syncplay-canary-cache:

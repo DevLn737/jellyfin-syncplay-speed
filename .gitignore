@@ -1,0 +1,5 @@
+.env
+*.local
+canary-data/
+image-digest.txt
+PLANNING-PROMPT.md

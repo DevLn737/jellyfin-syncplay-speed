@@ -1,0 +1,308 @@
+name: CI and release image
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the tested image to GHCR
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: syncplay-rate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RELEASE_VERSION: 10.11.11-syncplay.1
+  SERVER_REF: 3b9beb62dfd708a2edfef06e644351ba3521292a
+  SERVER_BASE_REF: 1fbd8739292cce610231be93daf43368733edf63
+  WEB_REF: 7d15aa83ac32f66ccbdfd7d2d0116bec5eb64c34
+  PACKAGING_REF: a5c7e85a759ca5b038f943033f05be695fe7c16e
+  IMAGE_NAME: ghcr.io/devln737/jellyfin-syncplay-speed
+
+jobs:
+  manifest:
+    name: Validate immutable manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout coordination repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Verify pinned refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(jq -r '.releaseVersion' release-manifest.json)" = "${RELEASE_VERSION}"
+          test "$(jq -r '.server.commit' release-manifest.json)" = "${SERVER_REF}"
+          test "$(jq -r '.server.upstreamCommit' release-manifest.json)" = "${SERVER_BASE_REF}"
+          test "$(jq -r '.web.commit' release-manifest.json)" = "${WEB_REF}"
+          test "$(jq -r '.packaging.commit' release-manifest.json)" = "${PACKAGING_REF}"
+          test "$(jq -r '.platform' release-manifest.json)" = 'linux/amd64'
+          if [[ "${GITHUB_REF_TYPE}" == 'tag' ]]; then
+            test "${GITHUB_REF_NAME}" = "v${RELEASE_VERSION}"
+          fi
+
+  server:
+    name: Server build and tests
+    needs: manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact server commit
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          repository: DevLn737/jellyfin
+          ref: ${{ env.SERVER_REF }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore Jellyfin.sln
+
+      - name: Build complete solution
+        run: dotnet build Jellyfin.sln --configuration Release --no-restore
+
+      - name: Run server implementation tests
+        run: dotnet test tests/Jellyfin.Server.Implementations.Tests/Jellyfin.Server.Implementations.Tests.csproj --configuration Release --no-build
+
+      - name: Generate and validate OpenAPI document
+        run: dotnet test tests/Jellyfin.Server.Integration.Tests/Jellyfin.Server.Integration.Tests.csproj --configuration Release --no-build --filter Jellyfin.Server.Integration.Tests.OpenApiSpecTests
+
+  web:
+    name: Web quality and production build
+    needs: manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact Web commit
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          repository: DevLn737/jellyfin-web
+          ref: ${{ env.WEB_REF }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci --no-audit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run build:check
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build:production
+
+  abi:
+    name: Public ABI compatibility
+    needs: manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact server head
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          repository: DevLn737/jellyfin
+          ref: ${{ env.SERVER_REF }}
+          path: server-head
+
+      - name: Checkout upstream 10.11.11 base
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          repository: DevLn737/jellyfin
+          ref: ${{ env.SERVER_BASE_REF }}
+          path: server-base
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Build base and head public assemblies
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet build server-base/Jellyfin.Server/Jellyfin.Server.csproj --configuration Release --output abi-base
+          dotnet build server-head/Jellyfin.Server/Jellyfin.Server.csproj --configuration Release --output abi-head
+
+      - name: Install pinned ApiCompat
+        run: dotnet tool install --tool-path tools Microsoft.DotNet.ApiCompat.Tool --version 9.0.316
+
+      - name: Reject ABI breaks
+        shell: bash
+        run: |
+          set -euo pipefail
+          for assembly in \
+            Jellyfin.Data.dll \
+            MediaBrowser.Common.dll \
+            MediaBrowser.Controller.dll \
+            MediaBrowser.Model.dll \
+            Emby.Naming.dll \
+            Jellyfin.Extensions.dll \
+            Jellyfin.MediaEncoding.Keyframes.dll \
+            Jellyfin.Database.Implementations.dll
+          do
+            tools/apicompat --left "abi-base/${assembly}" --right "abi-head/${assembly}"
+          done
+
+  openapi-compat:
+    name: OpenAPI compatibility
+    needs: manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact server head
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          repository: DevLn737/jellyfin
+          ref: ${{ env.SERVER_REF }}
+          path: server-head
+
+      - name: Checkout upstream 10.11.11 base
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          repository: DevLn737/jellyfin
+          ref: ${{ env.SERVER_BASE_REF }}
+          path: server-base
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@2016bd2012dba4e32de620c46fe006a3ac9f0602 # v5.0.1
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Generate both OpenAPI documents
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet test server-base/tests/Jellyfin.Server.Integration.Tests/Jellyfin.Server.Integration.Tests.csproj --configuration Release --filter Jellyfin.Server.Integration.Tests.OpenApiSpecTests
+          dotnet test server-head/tests/Jellyfin.Server.Integration.Tests/Jellyfin.Server.Integration.Tests.csproj --configuration Release --filter Jellyfin.Server.Integration.Tests.OpenApiSpecTests
+
+      - name: Reject breaking OpenAPI changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --volume "${PWD}:/work" openapitools/openapi-diff:2.1.7 \
+            --fail-on-incompatible \
+            --markdown /work/openapi-diff.md \
+            /work/server-base/tests/Jellyfin.Server.Integration.Tests/bin/Release/net9.0/openapi.json \
+            /work/server-head/tests/Jellyfin.Server.Integration.Tests/bin/Release/net9.0/openapi.json
+          cat openapi-diff.md >> "${GITHUB_STEP_SUMMARY}"
+
+  image:
+    name: Combined linux/amd64 image and smoke test
+    needs:
+      - server
+      - web
+      - abi
+      - openapi-compat
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout exact server source
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          repository: DevLn737/jellyfin
+          ref: ${{ env.SERVER_REF }}
+          path: image-context/jellyfin-server
+
+      - name: Checkout exact Web source
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          repository: DevLn737/jellyfin-web
+          ref: ${{ env.WEB_REF }}
+          path: image-context/jellyfin-web
+
+      - name: Checkout exact official packaging source
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          repository: jellyfin/jellyfin-packaging
+          ref: ${{ env.PACKAGING_REF }}
+          path: image-context/packaging
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Define immutable image tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "RELEASE_IMAGE=${IMAGE_NAME}:${RELEASE_VERSION}" >> "${GITHUB_ENV}"
+          echo "SHA_IMAGE=${IMAGE_NAME}:sha-${GITHUB_SHA}" >> "${GITHUB_ENV}"
+
+      - name: Build exact linux/amd64 image and load it locally
+        shell: bash
+        working-directory: image-context
+        run: |
+          set -euo pipefail
+          docker buildx build \
+            --platform linux/amd64 \
+            --file packaging/docker/Dockerfile \
+            --build-arg DOTNET_VERSION=9.0 \
+            --build-arg NODEJS_VERSION=20 \
+            --build-arg PACKAGE_ARCH=amd64 \
+            --build-arg DOTNET_ARCH=x64 \
+            --build-arg IMAGE_ARCH=amd64 \
+            --build-arg TARGET_ARCH=amd64 \
+            --build-arg JELLYFIN_VERSION="${RELEASE_VERSION}" \
+            --label org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY}" \
+            --tag "${RELEASE_IMAGE}" \
+            --tag "${SHA_IMAGE}" \
+            --load \
+            .
+
+      - name: Smoke-test container health and Web UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          cleanup() { docker rm --force jellyfin-syncplay-smoke >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          docker run --detach --name jellyfin-syncplay-smoke --publish 127.0.0.1:18096:8096 "${RELEASE_IMAGE}"
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:18096/health >/dev/null \
+              && curl --fail --silent --output /dev/null http://127.0.0.1:18096/web/index.html; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs jellyfin-syncplay-smoke
+          exit 1
+
+      - name: Login to GHCR
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.publish }}
+        uses: docker/login-action@184bdaa0721073962dff0199f1fb9940f07167d1 # v3.5.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish tested tags and record digest
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.publish }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker push "${RELEASE_IMAGE}"
+          docker push "${SHA_IMAGE}"
+          docker buildx imagetools inspect "${RELEASE_IMAGE}" --format '{{json .Manifest}}' > image-manifest.json
+          digest="$(docker buildx imagetools inspect "${RELEASE_IMAGE}" --format '{{.Manifest.Digest}}')"
+          echo "Published ${IMAGE_NAME}@${digest}" | tee image-digest.txt
+          echo "### Published image" >> "${GITHUB_STEP_SUMMARY}"
+          echo "\`${IMAGE_NAME}@${digest}\`" >> "${GITHUB_STEP_SUMMARY}"
