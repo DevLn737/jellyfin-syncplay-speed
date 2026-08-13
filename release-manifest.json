@@ -4,7 +4,7 @@
   "releaseTag": "v10.11.11-syncplay.2",
   "platform": "linux/amd64",
   "image": "ghcr.io/devln737/jellyfin-syncplay-speed",
-  "publishedImageDigest": null,
+  "publishedImageDigest": "sha256:926357304ab155329ee4545b1d90857e7b25346d5286482770b7ef775482753a",
   "server": {
     "repository": "https://github.com/DevLn737/jellyfin.git",
     "branch": "syncplay-rate/10.11",
