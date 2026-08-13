@@ -11,7 +11,7 @@ The image is releasable only after all GitHub Actions jobs pass:
 - Web lint, TypeScript check, Vitest and production build;
 - combined-image container health/Web smoke test.
 
-Create the coordinated tag `v10.11.11-syncplay.1`. Record the resulting GHCR digest in the release notes and then update `publishedImageDigest` in a follow-up manifest commit. Deployment references use the digest.
+Create the coordinated tag named by `releaseTag` in `release-manifest.json`. Record the resulting GHCR digest in the release notes and then update `publishedImageDigest` in a follow-up manifest commit. Deployment references use the digest.
 
 ## Production promotion
 

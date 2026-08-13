@@ -1,5 +1,11 @@
 # Changelog
 
+## 10.11.11-syncplay.2
+
+- Normalized native asynchronous player positions that are reported in seconds instead of the Web client's millisecond contract.
+- Prevented an out-of-range Ready position from scheduling a group pause or resume minutes into the future.
+- Added regressions for the observed `228 s` versus `0.228 s` mismatch and the Ready-barrier recovery path.
+
 ## 10.11.11-syncplay.1
 
 - Added a server-owned SyncPlay base playback rate with a default of `1.0`.

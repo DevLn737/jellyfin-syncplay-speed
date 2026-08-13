@@ -1,21 +1,21 @@
 {
   "schemaVersion": 1,
-  "releaseVersion": "10.11.11-syncplay.1",
-  "releaseTag": "v10.11.11-syncplay.1",
+  "releaseVersion": "10.11.11-syncplay.2",
+  "releaseTag": "v10.11.11-syncplay.2",
   "platform": "linux/amd64",
   "image": "ghcr.io/devln737/jellyfin-syncplay-speed",
-  "publishedImageDigest": "sha256:5ce5a0b04df70f456621241ba6d75b6b2a8cf5055dfed5963510fde9c20c9561",
+  "publishedImageDigest": null,
   "server": {
     "repository": "https://github.com/DevLn737/jellyfin.git",
     "branch": "syncplay-rate/10.11",
-    "commit": "3b9beb62dfd708a2edfef06e644351ba3521292a",
+    "commit": "24ef88bb39f697b0725a22f76f8e31dbaa890417",
     "upstreamTag": "v10.11.11",
     "upstreamCommit": "1fbd8739292cce610231be93daf43368733edf63"
   },
   "web": {
     "repository": "https://github.com/DevLn737/jellyfin-web.git",
     "branch": "syncplay-rate/10.11",
-    "commit": "22cc7626c727fb15d68b00742380ca329dbfb3db",
+    "commit": "05d60109e613a17da83bb0b3dafc58b1ab5cf1ca",
     "upstreamTag": "v10.11.11",
     "upstreamCommit": "35c0793ece3adbd247eab290ae1effab851f3d37"
   },
