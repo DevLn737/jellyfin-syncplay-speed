@@ -1,5 +1,10 @@
 # Changelog
 
+## 10.11.11-syncplay.3
+
+- Preserved sub-second JMP position precision by using the millisecond event position after detecting the native seconds-based asynchronous API.
+- Avoided an otherwise possible extra Ready/Seek correction caused by JMP 1.12.0 truncating `228.736 s` to `228 s`.
+
 ## 10.11.11-syncplay.2
 
 - Normalized native asynchronous player positions that are reported in seconds instead of the Web client's millisecond contract.

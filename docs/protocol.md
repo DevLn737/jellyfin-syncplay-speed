@@ -33,7 +33,7 @@ media position = anchored ticks + elapsed wall time × base playback rate
 
 A rate change first anchors position using the old base rate, then stores the new rate and enters the existing Seek/Ready barrier. A paused group remains paused; an idle group remembers the new value for the next playback.
 
-Ready positions are wire-level ticks derived from player milliseconds. The Web adapter compares asynchronous and event positions to normalize native players that return seconds from their asynchronous API. The server rejects Ready positions outside the playback-offset tolerance and sends an authoritative Seek instead of scheduling a distant pause or resume.
+Ready positions are wire-level ticks derived from player milliseconds. The Web adapter compares asynchronous and event positions to detect native players that return truncated seconds from their asynchronous API, then uses the precise millisecond event position. The server rejects Ready positions outside the playback-offset tolerance and sends an authoritative Seek instead of scheduling a distant pause or resume.
 
 The Web client separately tracks `effectivePlaybackRate` for temporary correction:
 

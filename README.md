@@ -19,7 +19,7 @@ The first supported release scenarios are `1×`, `1.25×` and `1.5×`. The API v
 [`release-manifest.json`](release-manifest.json) pins the exact server, Web and official packaging commits. CI checks those pins, builds only `linux/amd64`, runs server/Web/API compatibility gates, smoke-tests the combined image and publishes:
 
 ```text
-ghcr.io/devln737/jellyfin-syncplay-speed:10.11.11-syncplay.2
+ghcr.io/devln737/jellyfin-syncplay-speed:10.11.11-syncplay.3
 ghcr.io/devln737/jellyfin-syncplay-speed:sha-<coordination-commit>
 ```
 
