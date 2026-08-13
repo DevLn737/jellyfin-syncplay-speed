@@ -26,7 +26,7 @@ env:
   RELEASE_VERSION: 10.11.11-syncplay.1
   SERVER_REF: 3b9beb62dfd708a2edfef06e644351ba3521292a
   SERVER_BASE_REF: 1fbd8739292cce610231be93daf43368733edf63
-  WEB_REF: 7d15aa83ac32f66ccbdfd7d2d0116bec5eb64c34
+  WEB_REF: 22cc7626c727fb15d68b00742380ca329dbfb3db
   PACKAGING_REF: a5c7e85a759ca5b038f943033f05be695fe7c16e
   IMAGE_NAME: ghcr.io/devln737/jellyfin-syncplay-speed
 
@@ -198,6 +198,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Match Jellyfin's upstream ci-openapi.yml workaround for recursive composed schemas.
+          sed -i 's/"allOf"/"oneOf"/g' server-base/tests/Jellyfin.Server.Integration.Tests/bin/Release/net9.0/openapi.json
+          sed -i 's/"allOf"/"oneOf"/g' server-head/tests/Jellyfin.Server.Integration.Tests/bin/Release/net9.0/openapi.json
           docker run --rm --volume "${PWD}:/work" openapitools/openapi-diff:2.1.7 \
             --fail-on-incompatible \
             --markdown /work/openapi-diff.md \

@@ -15,7 +15,7 @@
   "web": {
     "repository": "https://github.com/DevLn737/jellyfin-web.git",
     "branch": "syncplay-rate/10.11",
-    "commit": "7d15aa83ac32f66ccbdfd7d2d0116bec5eb64c34",
+    "commit": "22cc7626c727fb15d68b00742380ca329dbfb3db",
     "upstreamTag": "v10.11.11",
     "upstreamCommit": "35c0793ece3adbd247eab290ae1effab851f3d37"
   },
