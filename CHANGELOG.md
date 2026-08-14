@@ -1,5 +1,12 @@
 # Changelog
 
+## 10.11.11-syncplay.4
+
+- Honored `AudioStreamIndex` for audio-only streams instead of silently selecting the first embedded audio track.
+- Added explicit FFmpeg stream mapping for external audio inputs, preventing a Russian sidecar URL from serving the Japanese track from the primary MKV.
+- Deduplicated SyncPlay Buffering/Ready reports while preserving the first Ready event for a newly started item.
+- Added controller regressions for external audio selection and FFmpeg `-map 1:0` generation.
+
 ## 10.11.11-syncplay.3
 
 - Preserved sub-second JMP position precision by using the millisecond event position after detecting the native seconds-based asynchronous API.

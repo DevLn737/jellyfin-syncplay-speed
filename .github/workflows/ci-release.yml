@@ -23,10 +23,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RELEASE_VERSION: 10.11.11-syncplay.3
-  SERVER_REF: 24ef88bb39f697b0725a22f76f8e31dbaa890417
+  RELEASE_VERSION: 10.11.11-syncplay.4
+  SERVER_REF: 06a9197b86d642a949a1826231730ecf04d26258
   SERVER_BASE_REF: 1fbd8739292cce610231be93daf43368733edf63
-  WEB_REF: c65e6fd0d19d8c8cf998ebd01b38b625d3c90eb4
+  WEB_REF: dea3b29db21ffeaf6d5ccb0b968da3fc1f8f697b
   PACKAGING_REF: a5c7e85a759ca5b038f943033f05be695fe7c16e
   IMAGE_NAME: ghcr.io/devln737/jellyfin-syncplay-speed
 
@@ -76,6 +76,9 @@ jobs:
 
       - name: Run server implementation tests
         run: dotnet test tests/Jellyfin.Server.Implementations.Tests/Jellyfin.Server.Implementations.Tests.csproj --configuration Release --no-build
+
+      - name: Run controller tests
+        run: dotnet test tests/Jellyfin.Controller.Tests/Jellyfin.Controller.Tests.csproj --configuration Release --no-build
 
       - name: Generate and validate OpenAPI document
         run: dotnet test tests/Jellyfin.Server.Integration.Tests/Jellyfin.Server.Integration.Tests.csproj --configuration Release --no-build --filter Jellyfin.Server.Integration.Tests.OpenApiSpecTests

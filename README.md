@@ -19,7 +19,7 @@ The first supported release scenarios are `1×`, `1.25×` and `1.5×`. The API v
 [`release-manifest.json`](release-manifest.json) pins the exact server, Web and official packaging commits. CI checks those pins, builds only `linux/amd64`, runs server/Web/API compatibility gates, smoke-tests the combined image and publishes:
 
 ```text
-ghcr.io/devln737/jellyfin-syncplay-speed:10.11.11-syncplay.3
+ghcr.io/devln737/jellyfin-syncplay-speed:10.11.11-syncplay.4
 ghcr.io/devln737/jellyfin-syncplay-speed:sha-<coordination-commit>
 ```
 
@@ -37,7 +37,7 @@ No production hostname, account, token, media path or homelab configuration belo
 
 ## Status
 
-The implementation and automated tests are ready for CI and canary validation. Jellyfin Media Player 1.12.0 correctly applies Web-issued playback rates, but its asynchronous position API reports seconds while the Web contract expects milliseconds. The Web fork normalizes that mismatch against the event position, so a separate Desktop build is not required.
+The implementation and automated tests are ready for CI and canary validation. The Web fork normalizes Jellyfin Media Player 1.12.0's seconds-based asynchronous position result against the millisecond event position. A small Desktop fork additionally supports independent external audio selection; the coordinated server image explicitly maps the selected sidecar input so the requested track is actually served.
 
 ## Licenses
 
