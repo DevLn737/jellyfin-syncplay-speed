@@ -40,7 +40,7 @@ No production hostname, account, token, media path or homelab configuration belo
 
 Release `10.11.11-syncplay.4` passed automated CI and two-client Windows canary acceptance. The Web fork normalizes Jellyfin Media Player 1.12.0's seconds-based asynchronous position result against the millisecond event position. The Desktop fork supports independent external audio selection, while the coordinated server image explicitly maps the selected sidecar input so the requested track is actually served.
 
-The stable Windows client is [Jellyfin Media Player 1.12.0 SyncPlay 1](https://github.com/DevLn737/jellyfin-desktop/releases/tag/v1.12.0-syncplay.1). Detailed live-test evidence is recorded in the [acceptance report](docs/acceptance-report-2026-08-20.md).
+The stable Windows client is available as a direct [installer](https://github.com/DevLn737/jellyfin-desktop/releases/download/v1.12.0-syncplay.1/JellyfinMediaPlayer-1.12.0-syncplay.1-win64.exe) or [portable ZIP](https://github.com/DevLn737/jellyfin-desktop/releases/download/v1.12.0-syncplay.1/JellyfinMediaPlayer-1.12.0-syncplay.1-portable-win64.zip). Detailed live-test evidence is recorded in the [acceptance report](docs/acceptance-report-2026-08-20.md).
 
 ## Licenses
 
