@@ -7,7 +7,7 @@
 - Deduplicated SyncPlay Buffering/Ready reports while preserving the first Ready event for a newly started item.
 - Added controller regressions for external audio selection and FFmpeg `-map 1:0` generation.
 - Added the paired Jellyfin Media Player `v1.12.0-syncplay.1` release with safe asynchronous external-track selection.
-- Passed two-client Windows acceptance for independent audio/subtitles, synchronized rates, pause/resume and seek without cumulative drift or runaway memory growth.
+- Passed two-client Windows canary acceptance and a four-client production stress session for independent audio/subtitles, synchronized rates, pause/resume, seek, reconnect recovery and concurrent groups without cumulative drift or runaway memory growth.
 
 ## 10.11.11-syncplay.3
 
