@@ -1,11 +1,12 @@
 # Jellyfin SyncPlay Playback Rate
 
-An experimental, capability-gated extension for synchronized playback speeds in Jellyfin 10.11.11.
+A capability-gated extension for synchronized playback speeds in Jellyfin 10.11.11.
 
 The project deliberately keeps the server and Web client as native public Jellyfin forks:
 
 - [`DevLn737/jellyfin`](https://github.com/DevLn737/jellyfin), branch `syncplay-rate/10.11`
 - [`DevLn737/jellyfin-web`](https://github.com/DevLn737/jellyfin-web), branch `syncplay-rate/10.11`
+- [`DevLn737/jellyfin-desktop`](https://github.com/DevLn737/jellyfin-desktop), branch `codex/external-audio-1.12`
 - this repository coordinates analysis, reproducible builds, releases and canary operations
 
 ## Safety model
@@ -37,7 +38,9 @@ No production hostname, account, token, media path or homelab configuration belo
 
 ## Status
 
-The implementation and automated tests are ready for CI and canary validation. The Web fork normalizes Jellyfin Media Player 1.12.0's seconds-based asynchronous position result against the millisecond event position. A small Desktop fork additionally supports independent external audio selection; the coordinated server image explicitly maps the selected sidecar input so the requested track is actually served.
+Release `10.11.11-syncplay.4` passed automated CI and two-client Windows canary acceptance. The Web fork normalizes Jellyfin Media Player 1.12.0's seconds-based asynchronous position result against the millisecond event position. The Desktop fork supports independent external audio selection, while the coordinated server image explicitly maps the selected sidecar input so the requested track is actually served.
+
+The stable Windows client is [Jellyfin Media Player 1.12.0 SyncPlay 1](https://github.com/DevLn737/jellyfin-desktop/releases/tag/v1.12.0-syncplay.1). Detailed live-test evidence is recorded in the [acceptance report](docs/acceptance-report-2026-08-20.md).
 
 ## Licenses
 

@@ -6,6 +6,8 @@
 - Added explicit FFmpeg stream mapping for external audio inputs, preventing a Russian sidecar URL from serving the Japanese track from the primary MKV.
 - Deduplicated SyncPlay Buffering/Ready reports while preserving the first Ready event for a newly started item.
 - Added controller regressions for external audio selection and FFmpeg `-map 1:0` generation.
+- Added the paired Jellyfin Media Player `v1.12.0-syncplay.1` release with safe asynchronous external-track selection.
+- Passed two-client Windows acceptance for independent audio/subtitles, synchronized rates, pause/resume and seek without cumulative drift or runaway memory growth.
 
 ## 10.11.11-syncplay.3
 
